@@ -1,0 +1,17 @@
+{
+  "name": "printdeploy-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "multer": "^2.0.0",
+    "uuid": "^11.1.0"
+  }
+}
