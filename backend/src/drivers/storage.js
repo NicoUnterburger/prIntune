@@ -104,6 +104,13 @@ export function getDriverPackage(id) {
   return metadata;
 }
 
+export function deleteDriverPackage(id) {
+  const packageDir = path.join(DRIVERS_DIR, id);
+  if (!fs.existsSync(path.join(packageDir, 'metadata.json'))) return false;
+  fs.rmSync(packageDir, { recursive: true, force: true });
+  return true;
+}
+
 export function getDriverFilesDir(id) {
   return path.join(DRIVERS_DIR, id, 'files');
 }

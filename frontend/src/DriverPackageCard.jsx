@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
-import { updateDriverPackage } from './api'
+import { deleteDriverPackage, updateDriverPackage } from './api'
 
 const PREVIEW_COUNT = 3
 
-export default function DriverPackageCard({ pkg, onSaved }) {
+export default function DriverPackageCard({ pkg, onSaved, onDeleted, onError }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(pkg.name)
   const [comment, setComment] = useState(pkg.comment)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [showModels, setShowModels] = useState(false)
   const [modelSearch, setModelSearch] = useState('')
 
@@ -35,6 +36,19 @@ export default function DriverPackageCard({ pkg, onSaved }) {
     setName(pkg.name)
     setComment(pkg.comment)
     setEditing(false)
+  }
+
+  const remove = async () => {
+    if (!window.confirm(`Treiberpaket „${pkg.name}" wirklich löschen?`)) return
+    setDeleting(true)
+    onError?.(null)
+    try {
+      await deleteDriverPackage(pkg.id)
+      onDeleted?.(pkg.id)
+    } catch (err) {
+      onError?.(err.message)
+      setDeleting(false)
+    }
   }
 
   return (
@@ -83,6 +97,13 @@ export default function DriverPackageCard({ pkg, onSaved }) {
                   className="text-gray-500 hover:text-gray-300 text-xs"
                 >
                   bearbeiten
+                </button>
+                <button
+                  onClick={remove}
+                  disabled={deleting}
+                  className="text-gray-500 hover:text-red-400 disabled:text-gray-600 text-xs"
+                >
+                  {deleting ? 'lösche…' : 'löschen'}
                 </button>
               </div>
               {pkg.comment && <p className="text-gray-400 text-sm mt-1">{pkg.comment}</p>}

@@ -25,6 +25,15 @@ Basiert auf dem bewährten Skript-Rezept aus
 4. Das generierte `.intunewin` zusammen mit Install-/Uninstall-Befehl und Detection-Rule
    (werden im Tool angezeigt) im Intune Win32-App-Wizard verwenden.
 
+## Schnellstart per Docker
+
+```bash
+docker compose up -d --build
+# danach: http://localhost:8080
+```
+
+Details, Konfiguration und Verwaltung: siehe [DOCKER.md](DOCKER.md).
+
 ## Entwicklung
 
 ```bash
@@ -46,6 +55,9 @@ backend/
 frontend/
   src/            React + Vite UI (Treiber-Upload, Generieren)
 ```
+
+Ausführliche Beschreibung der Bestandteile:
+[backend/README.md](backend/README.md) · [frontend/README.md](frontend/README.md)
 
 ## Bewusste Einschränkungen (MVP)
 

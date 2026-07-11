@@ -58,6 +58,8 @@ export default function DriversPage() {
             onSaved={(updated) =>
               setPackages((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
             }
+            onDeleted={(id) => setPackages((prev) => prev.filter((p) => p.id !== id))}
+            onError={setError}
           />
         ))}
       </div>

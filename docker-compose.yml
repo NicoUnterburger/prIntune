@@ -1,0 +1,31 @@
+# printDeploy – vollständiges Setup: Backend (API) + Frontend (nginx).
+# Start:  docker compose up -d --build
+# Öffnen: http://localhost:8080
+
+services:
+  backend:
+    build: ./backend
+    image: printdeploy-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      # Persistiert hochgeladene Treiber und generierte Pakete über Container-Neustarts hinweg.
+      - printdeploy-data:/app/data
+    # Kein Port nach außen nötig – nur das Frontend spricht das Backend im internen Netz an.
+    expose:
+      - "3001"
+
+  frontend:
+    build: ./frontend
+    image: printdeploy-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      # Links Host-Port, rechts Container (nginx auf 80). Bei Bedarf 8080 anpassen.
+      - "8080:80"
+
+volumes:
+  printdeploy-data:

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import multer from 'multer';
 import {
   createDriverPackage,
+  deleteDriverPackage,
   getDriverPackage,
   listDriverPackages,
   updateDriverPackage,
@@ -48,6 +49,12 @@ app.patch('/api/drivers/:id', (req, res) => {
   const metadata = updateDriverPackage(req.params.id, { name, comment });
   if (!metadata) return res.status(404).json({ error: 'Driver package not found' });
   res.json(metadata);
+});
+
+app.delete('/api/drivers/:id', (req, res) => {
+  const deleted = deleteDriverPackage(req.params.id);
+  if (!deleted) return res.status(404).json({ error: 'Driver package not found' });
+  res.status(204).end();
 });
 
 app.post('/api/generate', (req, res) => {

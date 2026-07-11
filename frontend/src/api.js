@@ -26,6 +26,19 @@ export function updateDriverPackage(id, updates) {
   }).then(handle);
 }
 
+export function deleteDriverPackage(id) {
+  return fetch(`${BASE}/drivers/${id}`, { method: 'DELETE' }).then((res) => {
+    if (!res.ok && res.status !== 204) {
+      return res
+        .json()
+        .catch(() => ({}))
+        .then((body) => {
+          throw new Error(body.error || `Request failed (${res.status})`);
+        });
+    }
+  });
+}
+
 export function generatePackage(payload) {
   return fetch(`${BASE}/generate`, {
     method: 'POST',

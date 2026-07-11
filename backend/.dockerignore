@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log*
+data/drivers/*
+data/generated/*
+!data/drivers/.gitkeep
+!data/generated/.gitkeep
+README.md
+.DS_Store
