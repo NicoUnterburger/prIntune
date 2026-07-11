@@ -1,7 +1,7 @@
 # printDeploy frontend – Build der React-App, Auslieferung über nginx
 
 # --- Build-Stage: erzeugt die statischen Dateien in dist/ ---
-FROM node:20-alpine AS build
+FROM node:26-alpine AS build
 
 WORKDIR /app
 
