@@ -1,7 +1,12 @@
 import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import fs from 'node:fs';
 import multer from 'multer';
+import { config } from './config.js';
+import { logger } from './logger.js';
+import { isValidId } from './validation.js';
 import {
   createDriverPackage,
   deleteDriverPackage,
@@ -18,11 +23,43 @@ import {
 } from './generate/history.js';
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
-const PORT = process.env.PORT || 3001;
 
-app.use(cors());
-app.use(express.json());
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: config.maxUploadMb * 1024 * 1024, files: 1 },
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.toLowerCase().endsWith('.zip')) return cb(null, true);
+    cb(new Error('Only .zip files are allowed'));
+  },
+});
+
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(
+  cors({
+    origin: config.corsOrigin === '*' ? true : config.corsOrigin.split(',').map((s) => s.trim()),
+  })
+);
+app.use(express.json({ limit: '1mb' }));
+app.use(
+  rateLimit({
+    windowMs: config.rateLimitWindowMin * 60 * 1000,
+    max: config.rateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
+
+// Reject any :id that is not a valid UUID before it ever reaches a filesystem path.
+app.param('id', (req, res, next, id) => {
+  if (!isValidId(id)) return res.status(400).json({ error: 'Invalid id' });
+  next();
+});
+
+// Liveness/readiness probe for Docker, Kubernetes, load balancers.
+app.get('/healthz', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
 
 app.post('/api/drivers', upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -84,6 +121,25 @@ app.get('/api/generated/:id/download', (req, res) => {
   fs.createReadStream(zipPath).pipe(res);
 });
 
-app.listen(PORT, () => {
-  console.log(`printDeploy backend listening on http://localhost:${PORT}`);
+// Central error handler – catches multer errors (e.g. file too large) and
+// anything thrown/next()'d from the routes above.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError || err.message === 'Only .zip files are allowed') {
+    return res.status(400).json({ error: err.message });
+  }
+  logger.error('Unhandled error', { path: req.path, error: err.message });
+  res.status(500).json({ error: 'Internal server error' });
 });
+
+const server = app.listen(config.port, () => {
+  logger.info('printDeploy backend listening', { port: config.port });
+});
+
+// Graceful shutdown so in-flight requests finish on stop/redeploy.
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.on(signal, () => {
+    logger.info('Shutting down', { signal });
+    server.close(() => process.exit(0));
+  });
+}

@@ -1,5 +1,9 @@
 # printDeploy
 
+[![CI](https://github.com/NicoUnterburger/prIntune/actions/workflows/ci.yml/badge.svg)](https://github.com/NicoUnterburger/prIntune/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
+
 Internes Web-Tool, das aus einem Druckertreiberpaket (INF + CAT + weitere Dateien) und ein paar
 Eingaben (Modell, Druckername, IP) einen fertigen Quellordner für
 [`IntuneWinAppUtil.exe`](https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool) baut.
@@ -55,6 +59,8 @@ Details, Konfiguration und Verwaltung: siehe [DOCKER.md](DOCKER.md).
 
 ## Entwicklung
 
+**Voraussetzungen:** Node.js ≥ 20 und npm (für den Docker-Weg: Docker mit Compose v2).
+
 ```bash
 # Backend (Port 3001)
 cd backend && npm install && npm run dev
@@ -63,13 +69,30 @@ cd backend && npm install && npm run dev
 cd frontend && npm install && npm run dev
 ```
 
+Vor einem Commit prüfen, was auch die CI prüft:
+
+```bash
+cd backend  && npm run lint && npm test
+cd frontend && npm run lint && npm run build
+```
+
+## Konfiguration
+
+Das Backend wird über Umgebungsvariablen konfiguriert (Port, CORS, Upload-Limit, Rate-Limit,
+Log-Level). Alle Optionen mit Defaults stehen in [backend/.env.example](backend/.env.example) —
+zum Anpassen nach `backend/.env` kopieren. Für den Container-Betrieb siehe [DOCKER.md](DOCKER.md).
+
+Health-Check für Deployments/Load-Balancer: `GET /healthz`.
+
 ## Struktur
 
-```
+```text
 backend/
   src/drivers/    Upload, Storage, INF-Parser
   src/templates/  PS1-Skript-Templates + Renderer
   src/generate/   Baut den ZIP-Quellordner
+  src/config.js   Konfiguration aus Umgebungsvariablen
+  test/           Unit-Tests (Node-Test-Runner)
   data/drivers/   Persistente Treiberpakete (nicht in git)
 frontend/
   src/            React + Vite UI (Treiber-Upload, Generieren)
@@ -78,11 +101,28 @@ frontend/
 Ausführliche Beschreibung der Bestandteile:
 [backend/README.md](backend/README.md) · [frontend/README.md](frontend/README.md)
 
-## Bewusste Einschränkungen (MVP)
+## Betrieb & Sicherheit
 
-- Kein Login/Auth.
+- **Keine Authentifizierung.** prIntune ist für ein vertrauenswürdiges internes Netz oder den
+  Betrieb hinter einem authentifizierenden Reverse-Proxy gedacht — nicht ungeschützt aus dem
+  Internet erreichbar. Details: [SECURITY.md](SECURITY.md).
+- Gehärtet sind: Path-Traversal-Schutz (UUID-Validierung der IDs), Zip-Slip-Schutz beim
+  Entpacken, Upload-Größenlimit + Dateityp-Filter, Rate-Limiting und `helmet`-Header;
+  Container laufen als non-root.
+
+## Bewusste Einschränkungen
+
 - Kein automatisches Anlegen der Win32-App in Intune (Graph API) — nur der Quellordner + die
   nötigen Copy-Paste-Metadaten.
 - Der INF-Parser ist auf die generische Windows-Druckertreiber-INF-Struktur
   (`[Manufacturer]` → Modell-Sektion mit `"Anzeigename" = InstallSection, HardwareID`)
   ausgelegt; bei stark abweichenden INF-Layouts ggf. anpassen.
+
+## Mitmachen
+
+Beiträge willkommen — siehe [CONTRIBUTING.md](CONTRIBUTING.md). Änderungen werden in
+[CHANGELOG.md](CHANGELOG.md) festgehalten.
+
+## Lizenz
+
+[MIT](LICENSE) © Nico Unterburger

@@ -80,7 +80,7 @@ function resolveToken(value, strings) {
   return strings[match[1]] ?? value;
 }
 
-function parseManufacturerSection(sections, strings) {
+function parseManufacturerSection(sections) {
   const lines = sections.get('Manufacturer') || [];
   const targets = [];
   for (const line of lines) {
@@ -124,7 +124,7 @@ export function parseInf(buffer) {
   const text = decodeInf(buffer);
   const sections = splitSections(text);
   const strings = parseStrings(sections);
-  const modelSectionNames = parseManufacturerSection(sections, strings);
+  const modelSectionNames = parseManufacturerSection(sections);
 
   const modelsByName = new Map();
   for (const sectionName of modelSectionNames) {

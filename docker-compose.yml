@@ -10,12 +10,22 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      # Weitere Optionen (CORS_ORIGIN, MAX_UPLOAD_MB, RATE_LIMIT_*, LOG_LEVEL)
+      # siehe backend/.env.example.
+      - CORS_ORIGIN=*
+      - LOG_LEVEL=info
     volumes:
       # Persistiert hochgeladene Treiber und generierte Pakete über Container-Neustarts hinweg.
       - printdeploy-data:/app/data
     # Kein Port nach außen nötig – nur das Frontend spricht das Backend im internen Netz an.
     expose:
       - "3001"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   frontend:
     build: ./frontend

@@ -6,21 +6,27 @@ Dateien unter `data/` — es gibt keine Datenbank.
 
 ## Tech-Stack
 
-- **Node.js** (ES-Module, `"type": "module"`)
+- **Node.js** (ES-Module, `"type": "module"`, Node ≥ 20)
 - **Express** – HTTP-/REST-API
-- **multer** – Multipart-Upload der Treiber-ZIP (in-memory)
-- **adm-zip** – ZIP entpacken (Upload) und packen (generiertes Paket)
+- **multer** – Multipart-Upload der Treiber-ZIP (in-memory, mit Größen-/Typ-Limit)
+- **adm-zip** – ZIP entpacken (Upload, mit Zip-Slip-Schutz) und packen (generiertes Paket)
 - **uuid** – IDs für Treiber- und generierte Pakete
-- **cors** – erlaubt Zugriff des Frontends im Dev-Betrieb
+- **cors** – konfigurierbarer Zugriff des Frontends
+- **helmet** – sichere HTTP-Header
+- **express-rate-limit** – Rate-Limiting pro IP
+- **dotenv** – Konfiguration aus `.env`
 
 ## Bestandteile
 
 ```text
 src/
-  server.js              Express-App: definiert alle Routen, bindet die Module zusammen
+  server.js              Express-App: Routen, Middleware (helmet/cors/rate-limit), Error-Handler
+  config.js              Konfiguration aus Umgebungsvariablen (siehe .env.example)
+  logger.js              Minimaler strukturierter JSON-Logger
+  validation.js          Eingabe-Validierung (UUID-Check gegen Path-Traversal)
   drivers/
     infParser.js         Parst die Windows-Drucker-INF → Liste der Druckermodelle
-    storage.js           Upload speichern, INF wählen/parsen, Treiberpakete lesen/aktualisieren
+    storage.js           Upload speichern, INF wählen/parsen, Treiberpakete lesen/aktualisieren/löschen
   generate/
     generate.js          Baut den ZIP-Quellordner (Treiberdateien + gerenderte PS1-Skripte)
     history.js           Persistiert generierte Pakete und liefert sie für Download/Verlauf
@@ -28,6 +34,7 @@ src/
     Install-Printer.ps1.tpl   Vorlage: Treiber stagen, Port + Drucker anlegen
     Remove-Printer.ps1.tpl    Vorlage: Drucker, Port und Treiber entfernen
     render.js                 Ersetzt {{TOKEN}} in den Vorlagen durch die Eingaben
+test/                    Unit-Tests (Node-Test-Runner): infParser, validation
 data/
   drivers/               Persistierte Treiberpakete (pro Upload ein <uuid>-Ordner)
   generated/             Persistierte generierte Pakete (Verlauf, inkl. package.zip)
@@ -94,6 +101,7 @@ startet den Spooler neu und legt Port + Drucker über die `Add-Printer*`-Cmdlets
 
 | Methode | Pfad                          | Zweck                                                    |
 | ------- | ----------------------------- | -------------------------------------------------------- |
+| `GET`   | `/healthz`                    | Health-Check (Liveness/Readiness)                        |
 | `POST`  | `/api/drivers`                | Treiber-ZIP hochladen (multipart, Feld `file`)           |
 | `GET`   | `/api/drivers`                | Alle Treiberpakete auflisten                             |
 | `GET`   | `/api/drivers/:id/models`     | Modelle eines Treiberpakets                              |
@@ -110,7 +118,11 @@ npm install
 npm run dev      # node --watch, Port 3001
 # oder
 npm start        # ohne Watch
+
+npm test         # Unit-Tests (Node-Test-Runner)
+npm run lint     # ESLint
 ```
 
-`PORT` per Umgebungsvariable überschreibbar. Die Daten unter `data/` sind Server-State
-und stehen in `.gitignore` (nur `.gitkeep` bleibt versioniert).
+Konfiguration über Umgebungsvariablen bzw. `.env` — alle Optionen mit Defaults in
+[.env.example](.env.example). Die Daten unter `data/` sind Server-State und stehen in
+`.gitignore` (nur `.gitkeep` bleibt versioniert).

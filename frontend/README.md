@@ -16,7 +16,7 @@ lokalen State (Tabs). Kein State-Management-Framework; jede Seite hält ihren ei
 
 ## Bestandteile
 
-```
+```text
 index.html               Einstiegspunkt, lädt src/main.jsx
 src/
   main.jsx               React-Root, rendert <App>
@@ -87,4 +87,5 @@ npm install
 npm run dev        # Vite-Dev-Server auf http://localhost:5173
 npm run build      # Produktions-Build nach dist/
 npm run preview    # Build lokal ansehen
+npm run lint       # ESLint
 ```

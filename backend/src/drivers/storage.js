@@ -8,6 +8,24 @@ import { parseInf } from './infParser.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const DRIVERS_DIR = path.join(__dirname, '..', '..', 'data', 'drivers');
 
+// Entpackt eine ZIP sicher: jeder Eintrag muss innerhalb von targetDir landen.
+// Schützt vor Zip-Slip (Einträge mit "../" oder absoluten Pfaden).
+function safeExtract(zip, targetDir) {
+  const resolvedTarget = path.resolve(targetDir);
+  for (const entry of zip.getEntries()) {
+    const destPath = path.resolve(targetDir, entry.entryName);
+    if (destPath !== resolvedTarget && !destPath.startsWith(resolvedTarget + path.sep)) {
+      throw new Error(`Unsafe path in archive: ${entry.entryName}`);
+    }
+    if (entry.isDirectory) {
+      fs.mkdirSync(destPath, { recursive: true });
+    } else {
+      fs.mkdirSync(path.dirname(destPath), { recursive: true });
+      fs.writeFileSync(destPath, entry.getData());
+    }
+  }
+}
+
 function findInfFiles(dir) {
   const results = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -44,8 +62,14 @@ export function createDriverPackage(zipBuffer, originalName) {
   const filesDir = path.join(packageDir, 'files');
   fs.mkdirSync(filesDir, { recursive: true });
 
-  const zip = new AdmZip(zipBuffer);
-  zip.extractAllTo(filesDir, true);
+  let zip;
+  try {
+    zip = new AdmZip(zipBuffer);
+    safeExtract(zip, filesDir);
+  } catch (err) {
+    fs.rmSync(packageDir, { recursive: true, force: true });
+    throw new Error(`Invalid or unsafe ZIP archive: ${err.message}`);
+  }
 
   const infFiles = findInfFiles(filesDir);
   if (infFiles.length === 0) {
