@@ -25,6 +25,25 @@ Basiert auf dem bewährten Skript-Rezept aus
 4. Das generierte `.intunewin` zusammen mit Install-/Uninstall-Befehl und Detection-Rule
    (werden im Tool angezeigt) im Intune Win32-App-Wizard verwenden.
 
+## Screenshots
+
+**Treiberpakete** – hochladen, verwalten, löschen; die geparsten Modelle je Paket:
+
+![Treiberpakete](pictures/drivers.png)
+
+**Generieren** – Treiberpaket, Modell (mit Suche), Druckername und IP wählen:
+
+![Paket generieren](pictures/generator.png)
+
+**Ergebnis** – ZIP-Download plus die Copy-Paste-Metadaten für den Intune-Win32-App-Wizard
+(Install-/Uninstall-Befehl, `IntuneWinAppUtil`-Aufruf, Detection Rule):
+
+![Generiertes Paket](pictures/result.png)
+
+**Verlauf** – alle bereits generierten Pakete, jederzeit erneut herunterladbar:
+
+![Verlauf](pictures/history.png)
+
 ## Schnellstart per Docker
 
 ```bash
